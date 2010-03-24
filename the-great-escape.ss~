@@ -42,22 +42,19 @@
         (mag (magnitude-vector2 v)))
     (make-vector2 (/ x mag) (/ y mag))))
 
-(define (scale-vector2 n v)
-  (make-vector2 (* n (vector2-x v))
-                (* n (vector2-y v))))
-
 (define (set-sprite-heading s x y)
   (make-sprite (sprite-x s)
                (sprite-y s)
-               (set-particle-direction (sprite-particle s) (- x (sprite-x s)) (- y (sprite-y s)))
+               (set-particle-heading (sprite-particle s) x y)
                (sprite-image s)))
 
 (define (make-normalized-vector2 x y)
   (normalize-vector2 (make-vector2 x y)))
 
-(define (set-particle-direction p x y)
+(define (set-particle-heading p x y)
   (make-particle (particle-speed p)
-                 (make-normalized-vector2 x y)))
+                 (make-normalized-vector2 (- x (vector2-x (particle-direction p)))
+                                          (- y (vector2-y (particle-direction p))))))
 
 
 ; ------------------------------
@@ -70,8 +67,8 @@
 (define initial-player
   (make-sprite
    (/ SCREEN-WIDTH 2)
-   (- SCREEN-HEIGHT (image-height player-layer))
-   (make-particle DEFAULT-PLAYER-SPEED (make-normalized-vector2 0 (- 1)))
+   (image-height player-layer)
+   (make-particle DEFAULT-PLAYER-SPEED (make-normalized-vector2 0 1))
    player-layer))
 
 (define initial-world (make-world initial-player))
@@ -91,11 +88,12 @@
 
 (define (update-sprite s)
   (let* ((particle (sprite-particle s))
-         (dxy (scale-vector2 (particle-speed particle) (particle-direction particle)))
+         (speed (particle-speed particle))
+         (dxy (particle-direction particle))
          (dx (vector2-x dxy))
          (dy (vector2-y dxy)))
-  (make-sprite (+ dx (sprite-x s))
-               (+ dy (sprite-y s))
+  (make-sprite (+ (* dx speed) (sprite-x s))
+               (+ (* dy speed) (sprite-y s))
                (sprite-particle s)
                (sprite-image s))))
 
