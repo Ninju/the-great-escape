@@ -1,6 +1,6 @@
 == About
 
-It's a game (or at least, will be!) written in the Scheme programming language. You are a prisoner on the run. The goal is to escape by completing in the levels in which you run past various officers (prison officers, police officers, border patrol officers (is that the right name?) etc etc).
+It's a game (or at least, will be!) written in the Scheme programming language. You are a prisoner on the run. The goal is to escape by running past the various officers (prison officers, police officers, border patrol officers (is that the right name?) etc etc) through the different levels without getting caught.
 
 == Basic Idea
 
@@ -14,4 +14,10 @@ As things will get harder, and I can't see it being possible once there are a ce
 
 As I said previously, the game will be written in Scheme. I am pretty new to using Scheme for anything except following along to SICP :P
 
-Essentially what I'm saying is that I don't really know the best way to describe this, but I am using PLT Scheme. Development done mostly in DrScheme using the "Advanced Student" language (/teachpack??? see what I mean)... so about the only advice I can give for running it, is to open DrScheme and open the file from there, and that should work - provided you are using a relatively new version (v372 didn't work for me, and I am using v 4.2.4 right now - which does work).
+Essentially what I'm saying is that I don't really know the best way to describe this, but I am using PLT Scheme. Development done mostly in DrScheme using the "Advanced Student" language (/teachpack??? see what I mean)... so about the only advice I can give for running it, is to open DrScheme and open the file from there, and that should work - provided you are using a relatively new version (v372 didn't work for me, and I am using v 4.2.4 right now - which does work, obviously, lol).
+
+== Status
+
+I'll try and keep this section fairly up-to-date over the next week just to let you know where I am.
+
+Currently you click on the screen and a small yellow circle heads in that direction, amazing! right? Well, I think it's a step up from my expanding circle of doom, though that was pretty damn awesome too.
