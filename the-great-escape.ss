@@ -49,6 +49,12 @@
   (make-particle (particle-speed p)
                  (make-normalized-vector2 x y)))
 
+; ------------------------------
+;;;;;;;;;;;;;;;;;;;;;;;;;
+;; COLLISION DETECTION ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
 
 ; ------------------------------
 ;;;;;;;;;;;;;;;;;;;;
@@ -69,11 +75,6 @@
 ; ------------------------------
 ;;;;;;;;;;;;;;;;;;;;
 ;; UPDATE METHODS ;;
-;;;;;;;;;;;;;;;;;;;;
-;; For updating the
-;; position of 
-;; objects in the 
-;; world etc..
 ;;;;;;;;;;;;;;;;;;;;
 (define (update-world w)
   (make-world
