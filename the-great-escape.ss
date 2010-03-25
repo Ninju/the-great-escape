@@ -30,10 +30,7 @@
            (sqr (vector2-y v)))))
 
 (define (normalize-vector2 v)
-  (let ((x (vector2-x v))
-        (y  (vector2-y v))
-        (mag (magnitude-vector2 v)))
-    (make-vector2 (/ x mag) (/ y mag))))
+  (scale-vector2 (/ 1 (magnitude-vector2 v)) v))
 
 (define (scale-vector2 n v)
   (make-vector2 (* n (vector2-x v))
