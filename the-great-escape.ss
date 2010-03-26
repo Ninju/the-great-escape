@@ -20,6 +20,7 @@
 (define-struct particle (speed direction))
 (define-struct sprite (x y particle image))
 (define-struct world (player))
+(define-struct bounding-circle (x y radius))
 
 ; ------------------------------
 ;;;;;;;;;;;;;;;;;;;;;;;
@@ -36,6 +37,26 @@
   (make-vector2 (* n (vector2-x v))
                 (* n (vector2-y v))))
 
+(define (subtract-vector2 v1 v2)
+  (make-vector2 (- (vector2-x v1) (vector2-x v2))
+                (- (vector2-y v1) (vector2-y v2))))
+
+(define (as-bounding-circle sprite s)
+  (make-bounding-circle (sprite-x s) (sprite-y s) (max (image-width (sprite-image s)) (image-height (sprite-image s)))))
+
+(define (collided? s1 s2)
+  (let ((b1 (as-bounding-circle s1))
+        (b2 (as-bounding-circle s2)))
+    (<= (distance-between-bounding-circles b1 b2)
+        (+ (bounding-circle-radius b1) (bounding-circle-radius b2)))))
+
+(define (distance-between-bounding-circles b1 b2)
+  (distance-between-vector2 (make-vector2 (bounding-circle-x b1) (bounding-circle-y b1))
+                            (make-vector2 (bounding-circle-x b2) (bounding-circle-y b2))))
+
+(define (distance-between-vector2 v1 v2)
+  (magnitude (subtract-vector2 v1 v2)))
+
 (define (set-sprite-heading s x y)
   (make-sprite (sprite-x s)
                (sprite-y s)
@@ -47,21 +68,29 @@
 
 (define (set-particle-direction p x y)
   (make-particle (particle-speed p)
-                 (make-normalized-vector2 x y)))
+                 (make-normalized-vector2 x  y)))
 
-; ------------------------------
-;;;;;;;;;;;;;;;;;;;;;;;;;
-;; COLLISION DETECTION ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;
+(define (set-particle-speed p speed)
+  (make-particle speed (particle-direction p)))
 
+(define (stop-sprite s)
+  (make-sprite (sprite-x s)
+               (sprite-y s)
+               (set-particle-speed 0 (sprite-particle s))
+               (sprite-image s)))
 
+; This HAS to be already defined as something, but I can't find it :-/
+(define (any? pred l)
+  (if (null? l)
+      #f
+      (or (pred (car l)) (any? pred (cdr l)))))
 
 ; ------------------------------
 ;;;;;;;;;;;;;;;;;;;;
 ;; DEFAULT VALUES ;;
 ;;;;;;;;;;;;;;;;;;;;
 (define player-layer (circle 10 "solid" "yellow"))
-(define (empty-scene w h) (rectangle w h "solid" "blue"))
+(define (empty-scene w h) (rectangle w h "solid" (make-color 100 100 100)))
 
 (define initial-player
   (make-sprite
@@ -72,14 +101,26 @@
 
 (define initial-world (make-world initial-player))
 
+(define playable-area
+  (let ((top (rectangle SCREEN-WIDTH (/ SCREEN-HEIGHT 2) "solid" (make-color 20 20 20)))
+        (middle (rectangle (/ (* 3 SCREEN-WIDTH) 4) (* 2 (/ SCREEN-HEIGHT 5)) "solid" (make-color 20 20 20)))
+        (gate (rectangle (/ SCREEN-WIDTH 3) 5 "solid" (make-color 20 20 20))))
+    (above top (above gate middle))))
+
+; ------------------------------
+;;;;;;;;;;;;;;;;;;;;;;;;;
+;; COLLISION DETECTION ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ; ------------------------------
 ;;;;;;;;;;;;;;;;;;;;
 ;; UPDATE METHODS ;;
 ;;;;;;;;;;;;;;;;;;;;
 (define (update-world w)
-  (make-world
-   (update-sprite (world-player w))))
+  (make-world (update-sprite (world-player w))))
 
+;; If the Sprite is going to collide with something in the next move, stop it moving.
+;; Otherwise move it in it's heading at the speed it should be travelling.
 (define (update-sprite s)
   (let* ((particle (sprite-particle s))
          (dxy (scale-vector2 (particle-speed particle) (particle-direction particle)))
@@ -96,7 +137,7 @@
 ;;;;;;;;;;;;;;;;;;;;
 (define (render-world w)
   (render-sprite (world-player w)
-                 (empty-scene SCREEN-WIDTH SCREEN-HEIGHT)))
+                 (overlay/align "middle" "top" playable-area (empty-scene SCREEN-WIDTH SCREEN-HEIGHT))))
 
 (define (render-sprite s scene)
   (place-image (sprite-image s) (sprite-x s) (sprite-y s) scene))
