@@ -19,7 +19,8 @@
 (define-struct vector2 (x y))
 (define-struct particle (speed direction))
 (define-struct sprite (x y particle image))
-(define-struct world (player))
+(define-struct world (game player))
+(define-struct game (status))
 (define-struct bounding-circle (x y radius))
 
 ; ------------------------------
@@ -79,6 +80,7 @@
                (set-particle-speed 0 (sprite-particle s))
                (sprite-image s)))
 
+
 ; This HAS to be already defined as something, but I can't find it :-/
 (define (any? pred l)
   (if (null? l)
@@ -99,13 +101,18 @@
    (make-particle DEFAULT-PLAYER-SPEED (make-normalized-vector2 0 (- 1)))
    player-layer))
 
-(define initial-world (make-world initial-player))
+(define initial-game (make-game 'player-escaping))
+
+(define initial-world (make-world initial-game initial-player))
 
 (define playable-area
   (let ((top (rectangle SCREEN-WIDTH (/ SCREEN-HEIGHT 2) "solid" (make-color 20 20 20)))
         (middle (rectangle (/ (* 3 SCREEN-WIDTH) 4) (* 2 (/ SCREEN-HEIGHT 5)) "solid" (make-color 20 20 20)))
         (gate (rectangle (/ SCREEN-WIDTH 3) 5 "solid" (make-color 20 20 20))))
     (above top (above gate middle))))
+
+(define (set-level-complete g)
+  (make-game 'player-escaped))
 
 ; ------------------------------
 ;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -117,7 +124,9 @@
 ;; UPDATE METHODS ;;
 ;;;;;;;;;;;;;;;;;;;;
 (define (update-world w)
-  (make-world (update-sprite (world-player w))))
+  (if (>= 0 (sprite-y (world-player w)))
+      (make-world (set-level-complete (world-game w)) (world-player w))
+      (make-world (world-game w) (update-sprite (world-player w)))))
 
 ;; If the Sprite is going to collide with something in the next move, stop it moving.
 ;; Otherwise move it in it's heading at the speed it should be travelling.
@@ -148,7 +157,7 @@
 ;;;;;;;;;;;;;;;;;;;;
 (define (handle-mouse-input w x y mouse-event)
   (if (mouse=? "button-up" mouse-event)
-      (make-world (set-sprite-heading (world-player w) x y))
+      (make-world (world-game w) (set-sprite-heading (world-player w) x y))
       w))
 
 ; ------------------------------
