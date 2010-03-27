@@ -10,6 +10,8 @@ As you progress through the different terrains/levels the number of inmates/fell
 
 As things will get harder, and I can't see it being possible once there are a certain number of officers vs you, I'll probably add some various pickups in the game: speed and stealth just to name a couple (I swear I had more!)
 
+Had some more ideas, one of which was having a level where dogs chase you based on a scent you will leave. Also maybe giving officers a line of sight so you are not just being hunted down by a hoarde of officers on each level all the time, that's more like a zombie game, lol. Adding things like trees/bushes that you can hide behind.
+
 == Development
 
 As I said previously, the game will be written in Scheme. I am pretty new to using Scheme for anything except following along to SICP :P
@@ -18,6 +20,4 @@ Essentially what I'm saying is that I don't really know the best way to describe
 
 == Status
 
-I'll try and keep this section fairly up-to-date over the next week just to let you know where I am.
-
-Currently you click on the screen and a small yellow circle heads in that direction, amazing! right? Well, I think it's a step up from my expanding circle of doom, though that was pretty damn awesome too.
+Only 1 level so far. Currently you can walk through walls, lol, but collision detection between the player and officers are there. Officers try and make an effort to catch you. Winning condition and losing condition are pretty much implemented for the first draft of the game. It's coming together, technically all I need to do is add collision detection for the walls and it is a done game. Needs serious polish though.
