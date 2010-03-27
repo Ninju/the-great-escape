@@ -179,11 +179,10 @@
 ;;;;;;;;;;;;;;;;;;;;
 (define (render-world w)
   (let* ((background (overlay/align "middle" "top" playable-area (empty-scene SCREEN-WIDTH SCREEN-HEIGHT)))
-         (main-image (foldl render-sprite background (world-officers w))))
-    (render-sprite (world-player w)
-                   (cond ((level-completed? w) (overlay level-completed-text main-image))
-                         ((player-caught? w) (overlay player-caught-text main-image))
-                         (#t main-image)))))
+         (main-image (render-sprite (world-player w) (foldl render-sprite background (world-officers w)))))
+    (cond ((level-completed? w) (overlay level-completed-text main-image))
+          ((player-caught? w) (overlay player-caught-text main-image))
+          (#t main-image))))
 
 (define (render-sprite s scene)
   (place-image (sprite-image s) (sprite-x s) (sprite-y s) scene))
