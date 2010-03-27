@@ -147,7 +147,7 @@
 (define (update-world w)
   (cond ((or (player-caught? w) (level-completed? w)) w)
         ((>= 0 (sprite-y (world-player w))) (set-level-complete w))
-        (#t (let* ((officers (map update-sprite (world-officers w)))
+        (#t (let* ((officers (world-officers (move-officers w)))
                    (player (update-sprite (world-player w)))
                    (world (make-world (world-game w) player officers)))
               (if (any? (lambda (o) (collided? player o)) officers)
@@ -166,17 +166,24 @@
                (sprite-particle s)
                (sprite-image s))))
 
+(define (move-officers w)
+  (let* ((player (world-player w))
+         (x (sprite-x player))
+         (y (sprite-y player)))
+    (make-world (world-game w) player
+                (map (lambda (o) (update-sprite (set-sprite-heading o x y))) (world-officers w)))))
+
 ; ------------------------------
 ;;;;;;;;;;;;;;;;;;;;
 ;; RENDER METHODS ;;
 ;;;;;;;;;;;;;;;;;;;;
 (define (render-world w)
-  (let* ((main-image (overlay/align "middle" "top" playable-area (empty-scene SCREEN-WIDTH SCREEN-HEIGHT)))
-         (main-image-with-officers (foldl render-sprite main-image (world-officers w))))
+  (let* ((background (overlay/align "middle" "top" playable-area (empty-scene SCREEN-WIDTH SCREEN-HEIGHT)))
+         (main-image (foldl render-sprite background (world-officers w))))
     (render-sprite (world-player w)
-                   (cond ((level-completed? w) (overlay level-completed-text main-image-with-officers))
-                         ((player-caught? w) (overlay player-caught-text main-image-with-officers))
-                         (#t main-image-with-officers)))))
+                   (cond ((level-completed? w) (overlay level-completed-text main-image))
+                         ((player-caught? w) (overlay player-caught-text main-image))
+                         (#t main-image)))))
 
 (define (render-sprite s scene)
   (place-image (sprite-image s) (sprite-x s) (sprite-y s) scene))
