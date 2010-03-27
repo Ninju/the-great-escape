@@ -132,7 +132,7 @@
 ;; COLLISION DETECTION ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 (define (sprite->bounding-circle s)
-  (make-bounding-circle (sprite-x s) (sprite-y s) (max (image-width (sprite-image s)) (image-height (sprite-image s)))))
+  (make-bounding-circle (sprite-x s) (sprite-y s) (/ (max (image-width (sprite-image s)) (image-height (sprite-image s))) 2)))
 
 (define (collided? s1 s2)
   (let ((b1 (sprite->bounding-circle s1))
