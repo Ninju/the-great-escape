@@ -93,6 +93,7 @@
 ;;;;;;;;;;;;;;;;;;;;
 (define player-layer (circle 10 "solid" "yellow"))
 (define (empty-scene w h) (rectangle w h "solid" (make-color 100 100 100)))
+(define level-completed-text (text "You escaped!" 24 "olive")) 
 
 (define initial-player
   (make-sprite
@@ -111,8 +112,11 @@
         (gate (rectangle (/ SCREEN-WIDTH 3) 5 "solid" (make-color 20 20 20))))
     (above top (above gate middle))))
 
-(define (set-level-complete g)
-  (make-game 'player-escaped))
+(define (set-level-complete w)
+  (make-world (make-game 'player-escaped) (world-player w)))
+
+(define (level-completed? w)
+  (eq? (game-status (world-game w)) 'player-escaped))
 
 ; ------------------------------
 ;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -125,7 +129,7 @@
 ;;;;;;;;;;;;;;;;;;;;
 (define (update-world w)
   (if (>= 0 (sprite-y (world-player w)))
-      (make-world (set-level-complete (world-game w)) (world-player w))
+      (set-level-complete w)
       (make-world (world-game w) (update-sprite (world-player w)))))
 
 ;; If the Sprite is going to collide with something in the next move, stop it moving.
@@ -145,8 +149,11 @@
 ;; RENDER METHODS ;;
 ;;;;;;;;;;;;;;;;;;;;
 (define (render-world w)
-  (render-sprite (world-player w)
-                 (overlay/align "middle" "top" playable-area (empty-scene SCREEN-WIDTH SCREEN-HEIGHT))))
+  (let ((main-image (overlay/align "middle" "top" playable-area (empty-scene SCREEN-WIDTH SCREEN-HEIGHT))))
+    (render-sprite (world-player w)
+                   (if (level-completed? w)
+                       (overlay level-completed-text main-image)
+                       main-image))))
 
 (define (render-sprite s scene)
   (place-image (sprite-image s) (sprite-x s) (sprite-y s) scene))
