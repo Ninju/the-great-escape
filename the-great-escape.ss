@@ -43,21 +43,12 @@
   (make-vector2 (- (vector2-x v1) (vector2-x v2))
                 (- (vector2-y v1) (vector2-y v2))))
 
-(define (as-bounding-circle sprite s)
-  (make-bounding-circle (sprite-x s) (sprite-y s) (max (image-width (sprite-image s)) (image-height (sprite-image s)))))
-
-(define (collided? s1 s2)
-  (let ((b1 (as-bounding-circle s1))
-        (b2 (as-bounding-circle s2)))
-    (<= (distance-between-bounding-circles b1 b2)
-        (+ (bounding-circle-radius b1) (bounding-circle-radius b2)))))
-
 (define (distance-between-bounding-circles b1 b2)
   (distance-between-vector2 (make-vector2 (bounding-circle-x b1) (bounding-circle-y b1))
                             (make-vector2 (bounding-circle-x b2) (bounding-circle-y b2))))
 
 (define (distance-between-vector2 v1 v2)
-  (magnitude (subtract-vector2 v1 v2)))
+  (magnitude-vector2 (subtract-vector2 v1 v2)))
 
 (define (set-sprite-heading s x y)
   (make-sprite (sprite-x s)
@@ -70,7 +61,7 @@
 
 (define (set-particle-direction p x y)
   (make-particle (particle-speed p)
-                 (make-normalized-vector2 x  y)))
+                 (make-normalized-vector2 x y)))
 
 (define (set-particle-speed p speed)
   (make-particle speed (particle-direction p)))
@@ -81,6 +72,8 @@
                (set-particle-speed 0 (sprite-particle s))
                (sprite-image s)))
 
+(define (game-status-text str)
+  (overlay (text str 26 "olive") (rectangle 200 60 "solid" "black")))
 
 ; This HAS to be already defined as something, but I can't find it :-/
 (define (any? pred l)
@@ -95,7 +88,9 @@
 (define player-layer (circle 10 "solid" "yellow"))
 (define officer-layer (circle 10 "solid" "blue"))
 (define (empty-scene w h) (rectangle w h "solid" (make-color 100 100 100)))
-(define level-completed-text (overlay (text "You escaped." 26 "olive") (rectangle 200 60 "solid" "black"))) 
+(define level-completed-text (game-status-text "You escaped!"))
+(define player-caught-text (game-status-text "You got caught!"))
+ 
 
 (define initial-player
   (make-sprite
@@ -123,22 +118,41 @@
 (define (set-level-complete w)
   (make-world (make-game 'player-escaped) (world-player w) (world-officers w)))
 
+(define (set-player-caught w)
+  (make-world (make-game 'player-caught) (world-player w) (world-officers w)))
+
 (define (level-completed? w)
   (eq? (game-status (world-game w)) 'player-escaped))
+
+(define (player-caught? w)
+  (eq? (game-status (world-game w)) 'player-caught))
 
 ; ------------------------------
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; COLLISION DETECTION ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;
+(define (sprite->bounding-circle s)
+  (make-bounding-circle (sprite-x s) (sprite-y s) (max (image-width (sprite-image s)) (image-height (sprite-image s)))))
+
+(define (collided? s1 s2)
+  (let ((b1 (sprite->bounding-circle s1))
+        (b2 (sprite->bounding-circle s2)))
+    (<= (distance-between-bounding-circles b1 b2)
+        (+ (bounding-circle-radius b1) (bounding-circle-radius b2)))))
 
 ; ------------------------------
 ;;;;;;;;;;;;;;;;;;;;
 ;; UPDATE METHODS ;;
 ;;;;;;;;;;;;;;;;;;;;
 (define (update-world w)
-  (if (>= 0 (sprite-y (world-player w)))
-      (set-level-complete w)
-      (make-world (world-game w) (update-sprite (world-player w)) (map update-sprite (world-officers w)))))
+  (cond ((or (player-caught? w) (level-completed? w)) w)
+        ((>= 0 (sprite-y (world-player w))) (set-level-complete w))
+        (#t (let* ((officers (map update-sprite (world-officers w)))
+                   (player (update-sprite (world-player w)))
+                   (world (make-world (world-game w) player officers)))
+              (if (any? (lambda (o) (collided? player o)) officers)
+                  (set-player-caught world)
+                  world)))))
 
 ;; If the Sprite is going to collide with something in the next move, stop it moving.
 ;; Otherwise move it in it's heading at the speed it should be travelling.
@@ -160,9 +174,9 @@
   (let* ((main-image (overlay/align "middle" "top" playable-area (empty-scene SCREEN-WIDTH SCREEN-HEIGHT)))
          (main-image-with-officers (foldl render-sprite main-image (world-officers w))))
     (render-sprite (world-player w)
-                   (if (level-completed? w)
-                       (overlay level-completed-text main-image-with-officers)
-                       main-image-with-officers))))
+                   (cond ((level-completed? w) (overlay level-completed-text main-image-with-officers))
+                         ((player-caught? w) (overlay player-caught-text main-image-with-officers))
+                         (#t main-image-with-officers)))))
 
 (define (render-sprite s scene)
   (place-image (sprite-image s) (sprite-x s) (sprite-y s) scene))
