@@ -11,6 +11,7 @@
 (define SCREEN-WIDTH 500)
 (define SCREEN-HEIGHT 500)
 (define DEFAULT-PLAYER-SPEED 5)
+(define DEFAULT-OFFICER-SPEED 3)
 
 ; ------------------------------
 ;;;;;;;;;;;;;;;;;;;;;
@@ -19,7 +20,7 @@
 (define-struct vector2 (x y))
 (define-struct particle (speed direction))
 (define-struct sprite (x y particle image))
-(define-struct world (game player))
+(define-struct world (game player officers))
 (define-struct game (status))
 (define-struct bounding-circle (x y radius))
 
@@ -92,8 +93,9 @@
 ;; DEFAULT VALUES ;;
 ;;;;;;;;;;;;;;;;;;;;
 (define player-layer (circle 10 "solid" "yellow"))
+(define officer-layer (circle 10 "solid" "blue"))
 (define (empty-scene w h) (rectangle w h "solid" (make-color 100 100 100)))
-(define level-completed-text (text "You escaped!" 24 "olive")) 
+(define level-completed-text (overlay (text "You escaped." 26 "olive") (rectangle 200 60 "solid" "black"))) 
 
 (define initial-player
   (make-sprite
@@ -104,7 +106,13 @@
 
 (define initial-game (make-game 'player-escaping))
 
-(define initial-world (make-world initial-game initial-player))
+(define generate-officer
+  (make-sprite (/ SCREEN-WIDTH 2)
+               (/ (image-height officer-layer) 2)
+               (make-particle DEFAULT-OFFICER-SPEED (make-normalized-vector2 0 1))
+               officer-layer))
+
+(define initial-world (make-world initial-game initial-player (list generate-officer)))
 
 (define playable-area
   (let ((top (rectangle SCREEN-WIDTH (/ SCREEN-HEIGHT 2) "solid" (make-color 20 20 20)))
@@ -113,7 +121,7 @@
     (above top (above gate middle))))
 
 (define (set-level-complete w)
-  (make-world (make-game 'player-escaped) (world-player w)))
+  (make-world (make-game 'player-escaped) (world-player w) (world-officers w)))
 
 (define (level-completed? w)
   (eq? (game-status (world-game w)) 'player-escaped))
@@ -130,7 +138,7 @@
 (define (update-world w)
   (if (>= 0 (sprite-y (world-player w)))
       (set-level-complete w)
-      (make-world (world-game w) (update-sprite (world-player w)))))
+      (make-world (world-game w) (update-sprite (world-player w)) (map update-sprite (world-officers w)))))
 
 ;; If the Sprite is going to collide with something in the next move, stop it moving.
 ;; Otherwise move it in it's heading at the speed it should be travelling.
@@ -149,11 +157,12 @@
 ;; RENDER METHODS ;;
 ;;;;;;;;;;;;;;;;;;;;
 (define (render-world w)
-  (let ((main-image (overlay/align "middle" "top" playable-area (empty-scene SCREEN-WIDTH SCREEN-HEIGHT))))
+  (let* ((main-image (overlay/align "middle" "top" playable-area (empty-scene SCREEN-WIDTH SCREEN-HEIGHT)))
+         (main-image-with-officers (foldl render-sprite main-image (world-officers w))))
     (render-sprite (world-player w)
                    (if (level-completed? w)
-                       (overlay level-completed-text main-image)
-                       main-image))))
+                       (overlay level-completed-text main-image-with-officers)
+                       main-image-with-officers))))
 
 (define (render-sprite s scene)
   (place-image (sprite-image s) (sprite-x s) (sprite-y s) scene))
@@ -164,7 +173,7 @@
 ;;;;;;;;;;;;;;;;;;;;
 (define (handle-mouse-input w x y mouse-event)
   (if (mouse=? "button-up" mouse-event)
-      (make-world (world-game w) (set-sprite-heading (world-player w) x y))
+      (make-world (world-game w) (set-sprite-heading (world-player w) x y) (world-officers w))
       w))
 
 ; ------------------------------
