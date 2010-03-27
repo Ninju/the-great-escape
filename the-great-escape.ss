@@ -75,6 +75,14 @@
 (define (game-status-text str)
   (overlay (text str 26 "olive") (rectangle 200 60 "solid" "black")))
 
+(define (inside-playable-area? sprite)
+  (let ((x (sprite-x sprite))
+        (y (sprite-y sprite)))
+    (and (> x 0)
+         (< x SCREEN-WIDTH)
+         (< y SCREEN-HEIGHT))))
+  
+
 ; This HAS to be already defined as something, but I can't find it :-/
 (define (any? pred l)
   (if (null? l)
@@ -148,14 +156,18 @@
   (cond ((or (player-caught? w) (level-completed? w)) w)
         ((>= 0 (sprite-y (world-player w))) (set-level-complete w))
         (#t (let* ((officers (world-officers (move-officers w)))
-                   (player (update-sprite (world-player w)))
+                   (player (move-sprite (world-player w)))
                    (world (make-world (world-game w) player officers)))
               (if (any? (lambda (o) (collided? player o)) officers)
                   (set-player-caught world)
                   world)))))
 
-;; If the Sprite is going to collide with something in the next move, stop it moving.
-;; Otherwise move it in it's heading at the speed it should be travelling.
+(define (move-sprite s)
+  (let ((updated-s (update-sprite s)))
+    (if (inside-playable-area? updated-s)
+        updated-s
+        s)))
+
 (define (update-sprite s)
   (let* ((particle (sprite-particle s))
          (dxy (scale-vector2 (particle-speed particle) (particle-direction particle)))
@@ -171,7 +183,7 @@
          (x (sprite-x player))
          (y (sprite-y player)))
     (make-world (world-game w) player
-                (map (lambda (o) (update-sprite (set-sprite-heading o x y))) (world-officers w)))))
+                (map (lambda (o) (move-sprite (set-sprite-heading o x y))) (world-officers w)))))
 
 ; ------------------------------
 ;;;;;;;;;;;;;;;;;;;;
